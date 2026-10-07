@@ -1,0 +1,22 @@
+---
+title: 'PredStats: Project 1'
+author: "Alex Poplawski"
+date: "10/6/2026"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(usethis)
+create_github_token()
+```
+
+```{r}
+library(readr)
+StudentAchievement <- read_csv("student-mat.csv")
+View(StudentAchievement)
+```
+
