@@ -64,4 +64,26 @@ StudentAchievement <- StudentAchievement %>%
 View(StudentAchievement)
 ```
 
+```{r}
+FacebookMetrics <- read_delim(
+  "dataset_Facebook.csv",
+  delim = ";",
+  trim_ws = TRUE
+) %>%
+  clean_names() %>% 
+  mutate(
+    type = as.factor(type),
+    category = as.factor(category),
+    paid = as.factor(paid)
+  ) %>%
+  mutate(across(
+    -c(type, category, paid),
+    ~ suppressWarnings(as.numeric(.))
+  ))
+
+View(FacebookMetrics)
+
+```
+
+
 ### Predicting G3 (Student Final Grade) using Reason, Failures, Absenses, Travel Time, and Study Time.
