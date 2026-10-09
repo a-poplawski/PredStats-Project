@@ -11,7 +11,25 @@ FacebookMetrics <- read_delim(
   delim = ";",
   trim_ws = TRUE
 ) %>%
-  clean_names() %>% 
+  clean_names() %>%
+  rename(
+    page_likes = page_total_likes,
+    post_month = post_month,
+    post_weekday = post_weekday,
+    post_hour = post_hour,
+    reach = lifetime_post_total_reach,
+    impressions = lifetime_post_total_impressions,
+    engaged_users = lifetime_engaged_users,
+    consumers = lifetime_post_consumers,
+    consumptions = lifetime_post_consumptions,
+    impressions_liked = lifetime_post_impressions_by_people_who_have_liked_your_page,
+    reach_liked = lifetime_post_reach_by_people_who_like_your_page,
+    engaged_liked = lifetime_people_who_have_liked_your_page_and_engaged_with_your_post,
+    comments = comment,
+    likes = like,
+    shares = share,
+    total_interactions = total_interactions
+  ) %>%
   mutate(
     type = as.factor(type),
     category = as.factor(category),
@@ -24,7 +42,10 @@ FacebookMetrics <- read_delim(
 
 View(FacebookMetrics)
 
+### Predicting Total Interactions Using Type, Page Total Likes, Post Month, Lifetime Post Total Reach, Lifetime Engaged Users, and Lifetime Post Consumers
+
+# Response Variable: Total Interactions (total_interactions)
+# Predictor Variables: Post Type (type), Page Total Likes (page_likes), Post Month (post_month), Lifetime Post Total Reach (reach), Lifetime Engaged Users (engaged_users), Lifetime Post Consumers (consumers)
 ```
 
 
-### Predicting G3 (Student Final Grade) using Reason, Failures, Absenses, Travel Time, and Study Time.
