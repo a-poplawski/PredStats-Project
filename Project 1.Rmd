@@ -48,4 +48,25 @@ View(FacebookMetrics)
 # Predictor Variables: Post Type (type), Page Total Likes (page_likes), Post Month (post_month), Lifetime Post Total Reach (reach), Lifetime Engaged Users (engaged_users), Lifetime Post Consumers (consumers)
 ```
 
+```{r}
+### Section 1
+## Data Description
+```
+
+```{r}
+### Section 2
+## Multiple Linear Regression and Model Comparison
+
+MLRModel <- lm(total_interactions ~ type + page_likes + post_month + reach + engaged_users + consumers, data = FacebookMetrics)
+
+summary(MLRModel)
+
+# Running the summary command on the model indicates that typeVideo, post_month, reach, engaged_users, and consumers are significant predictors of total interactions. typePhoto, typeStatus, and page_likes are not. 
+
+PolyModelReach <- lm(total_interactions ~ reach + I(reach^2) + I(reach^3), data = FacebookMetrics)
+
+summary(PolyModelReach)
+```
+
+
 
