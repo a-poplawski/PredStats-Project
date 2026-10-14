@@ -6,6 +6,19 @@ output: pdf_document
 ---
 
 ```{r}
+# 1. Install the package (only needed once if you haven't installed it yet)
+install.packages("olsrr")
+
+# 2. Load the package into your current R session
+library(olsrr)
+
+```
+```{r}
+create_github_token()
+```
+
+
+```{r}
 FacebookMetrics <- read_delim(
   "dataset_Facebook.csv",
   delim = ";",
@@ -53,19 +66,19 @@ View(FacebookMetrics)
 ## Data Description
 ```
 
+
 ```{r}
-### Section 2
-## Multiple Linear Regression and Model Comparison
+set.seed(123)
 
-MLRModel <- lm(total_interactions ~ type + page_likes + post_month + reach + engaged_users + consumers, data = FacebookMetrics)
+# 2. Determine split size (80% training, 20% testing)
+train_size <- floor(0.70 * nrow(FacebookMetrics))
 
-summary(MLRModel)
+# 3. Randomly sample row indices for the training set
+train_indices <- sample(seq_len(nrow(FacebookMetrics)), size = train_size)
 
-# Running the summary command on the model indicates that typeVideo, post_month, reach, engaged_users, and consumers are significant predictors of total interactions. typePhoto, typeStatus, and page_likes are not. 
-
-PolyModelReach <- lm(total_interactions ~ reach + I(reach^2) + I(reach^3), data = FacebookMetrics)
-
-summary(PolyModelReach)
+# 4. Create Train and Test datasets
+TrainData <- FacebookMetrics[train_indices, ]
+TestData  <- FacebookMetrics[-train_indices, ]
 ```
 
 ```{r}
@@ -152,6 +165,118 @@ BestSubsets
 
 BestSubsets$result[which.min(BestSubsets$result$sbc), ]
 
+```
+
+
+
+```{r}
+### Section 2
+## Multiple Linear Regression and Model Comparison
+
+
+
+MLRModel <- lm(total_interactions ~ type + page_likes + post_month + reach + engaged_users + consumers, data = TrainData)
+
+summary(MLRModel)
+
+train_mse_MLR <- mean(resid(MLRModel)^2)
+train_mse_MLR
+
+
+PolyModelReach <- lm(total_interactions ~ reach + I(reach^2) + I(reach^3), data = TrainData)
+
+summary(PolyModelReach)
+
+train_mse_Poly <- mean(resid(PolyModelReach)^2)
+train_mse_Poly
+
+
+###d
+
+# MLR Test MSE
+TrueTestValues  <- TestData$total_interactions
+TestPredictions <- predict(MLRModel, newdata = TestData)
+test_mse_MLR   <- mean(na.omit(TrueTestValues - TestPredictions)^2)
+
+# Polynomial Test MSE
+TrueTestValues  <- TestData$total_interactions
+TestPredictions <- predict(PolyModelReach, newdata = TestData)
+test_mse_Poly  <- mean(na.omit(TrueTestValues - TestPredictions)^2)
+
+test_mse_MLR
+test_mse_Polyq
+
+
+###h 
+
+BestModel <- lm(
+  total_interactions ~ type + page_likes + post_month + reach + engaged_users + consumers, 
+  data = FacebookMetrics
+)
+
+
+coef(BestModel)
+
+
+summary(BestModel)
+
+###i 
+NewData <- data.frame(
+  type = c("Photo", "Video"),
+  page_likes = c(120000, 135000),
+  post_month = c(5, 11),
+  reach = c(8000, 15000),
+  engaged_users = c(600, 1200),
+  consumers = c(400, 900)
+)
+
+# 3. Predict the response for both new observations
+Predictions <- predict(BestModel, newdata = NewData)
+Predictions
+
+```
+
+```{r}
+## Data Description 
+
+# Summary statistics command
+summary(FacebookMetrics$total_interactions)
+
+
+# Scatter plot with smooth LOWESS trend line
+plot(
+  FacebookMetrics$reach, 
+  FacebookMetrics$total_interactions,
+  xlab = "Lifetime Post Total Reach",
+  ylab = "Total Interactions",
+  main = "Total Interactions vs. Lifetime Post Total Reach",
+  pch = 19, 
+  col = "dodgerblue"
+)
+
+# Add smoothed trend line
+lines(
+  lowess(FacebookMetrics$reach, FacebookMetrics$total_interactions), 
+  col = "firebrick", 
+  lwd = 2
+)
+
+
+# Load required library (from lecture slide 5)
+library(olsrr)
+
+MyModel <- lm(
+  total_interactions ~ page_likes + type + category + post_month + post_weekday + post_hour + paid,
+  data = FacebookMetrics
+)
+
+BestSubsets <- ols_step_all_possible(MyModel)
+
+BestSubsets
+
+BestSubsets$result[which.min(BestSubsets$result$sbc), ]
+
+adding words to try and push
 ```
 
 
