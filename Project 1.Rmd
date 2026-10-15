@@ -278,8 +278,6 @@ BestSubsets$result[which.min(BestSubsets$result$sbc), ]
 
 
 ```
-```{r}
-ahshdggh
-```
+
 
 
