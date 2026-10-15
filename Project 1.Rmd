@@ -154,8 +154,16 @@ lines(
 # Load required library (from lecture slide 5)
 library(olsrr)
 
+# Convert integer/character categorical variables to factors
+FacebookMetrics$type <- as.factor(FacebookMetrics$type)
+FacebookMetrics$category <- as.factor(FacebookMetrics$category)
+FacebookMetrics$post_month <- as.factor(FacebookMetrics$post_month)
+FacebookMetrics$post_weekday <- as.factor(FacebookMetrics$post_weekday)
+FacebookMetrics$paid <- as.factor(FacebookMetrics$paid)
+
+
 MyModel <- lm(
-  total_interactions ~ page_likes + type + category + post_month + post_weekday + post_hour + paid,
+  total_interactions ~ page_likes + type + category + post_month + post_weekday + post_hour +paid,
   data = FacebookMetrics
 )
 
@@ -164,6 +172,55 @@ BestSubsets <- ols_step_all_possible(MyModel)
 BestSubsets
 
 BestSubsets$result[which.min(BestSubsets$result$sbc), ]
+
+
+
+## Forward Stepwise selection 
+
+
+FacebookMetrics_clean <- na.omit(FacebookMetrics[, c("total_interactions", "page_likes", 
+                                                     "type", "category", "post_month", 
+                                                     "post_weekday", "post_hour", "paid")])
+
+
+MyModel <- lm(
+  total_interactions ~ page_likes + type + category + post_month + post_weekday + post_hour + paid,
+  data = FacebookMetrics_clean
+)
+
+null_model <- lm(total_interactions ~ 1, data = FacebookMetrics_clean)
+
+n <- nrow(FacebookMetrics_clean)
+Forward_SBC <- step(
+  null_model,
+  scope = list(lower = null_model, upper = MyModel),
+  direction = "forward",
+  k = log(n)
+)
+
+BIC(Forward_SBC)
+
+
+## Backward Stepwise Selection 
+
+
+MyModel <- lm(
+  total_interactions ~ page_likes + type + category + post_month + post_weekday + post_hour + paid,
+  data = FacebookMetrics_clean
+)
+
+
+n <- nrow(FacebookMetrics_clean)
+
+
+Backward_SBC <- step(
+  MyModel,
+  direction = "backward",
+  k = log(n)
+)
+
+BIC(Backward_SBC)
+
 
 ```
 
@@ -237,45 +294,83 @@ Predictions
 ```
 
 ```{r}
-## Data Description 
-
-# Summary statistics command
-summary(FacebookMetrics$total_interactions)
+### Ridge/Lasso/Elastic Net regression 
 
 
-# Scatter plot with smooth LOWESS trend line
-plot(
-  FacebookMetrics$reach, 
-  FacebookMetrics$total_interactions,
-  xlab = "Lifetime Post Total Reach",
-  ylab = "Total Interactions",
-  main = "Total Interactions vs. Lifetime Post Total Reach",
-  pch = 19, 
-  col = "dodgerblue"
+library(glmnet)
+library(caret)
+library(dplyr)
+
+df_ridge <- FacebookMetrics %>%
+  select(total_interactions, page_likes, type, category, 
+         post_month, post_weekday, post_hour, paid) %>%
+  na.omit()
+
+
+MyTrainControl <- trainControl(method = "cv", number = 10)
+
+ridgeGrid <- expand.grid(
+  alpha = 0,
+  lambda = 10^seq(-2, 4, length = 100)
 )
 
-# Add smoothed trend line
-lines(
-  lowess(FacebookMetrics$reach, FacebookMetrics$total_interactions), 
-  col = "firebrick", 
-  lwd = 2
-)
+df_ridge_scaled <- df_ridge %>%
+  mutate(across(where(is.numeric) & -total_interactions, scale))
 
-
-# Load required library (from lecture slide 5)
-library(olsrr)
-
-MyModel <- lm(
+set.seed(123)
+ridge_caret <- train(
   total_interactions ~ page_likes + type + category + post_month + post_weekday + post_hour + paid,
-  data = FacebookMetrics
+  data = df_ridge_scaled,
+  method = "glmnet",
+  tuneGrid = ridgeGrid,
+  trControl = MyTrainControl
 )
 
-BestSubsets <- ols_step_all_possible(MyModel)
 
-BestSubsets
+ridge_caret
 
-BestSubsets$result[which.min(BestSubsets$result$sbc), ]
 
+plot(ridge_caret)
+
+
+ridge_caret$bestTune$lambda
+
+# 8. Extract estimated model coefficients (Slides 14)
+coef(ridge_caret$finalModel, s = ridge_caret$bestTune$lambda)
+
+### Lasso Regression 
+
+df_lasso <- FacebookMetrics %>%
+  select(total_interactions, page_likes, type, category, 
+         post_month, post_weekday, post_hour, paid) %>%
+  na.omit()
+
+MyTrainControl <- trainControl(method = "cv", number = 10)
+
+lassoGrid <- expand.grid(
+  alpha = 1,
+  lambda = 10^seq(-2, 2, length = 100)
+)
+
+
+df_lasso_scaled <- df_lasso %>%
+  mutate(across(where(is.numeric) & -total_interactions, scale))
+
+set.seed(123)
+lasso_caret <- train(
+  total_interactions ~ page_likes + type + category + post_month + post_weekday + post_hour + paid,
+  data = df_lasso_scaled,
+  method = "glmnet",
+  tuneGrid = lassoGrid,
+  trControl = MyTrainControl
+)
+
+plot(lasso_caret)
+
+lasso_caret$bestTune$lambda
+
+# 8. Extract estimated model coefficients for the best model (Slides 21)
+coef(lasso_caret$finalModel, s = lasso_caret$bestTune$lambda)
 
 ```
 
