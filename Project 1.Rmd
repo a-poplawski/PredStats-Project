@@ -276,7 +276,10 @@ BestSubsets
 
 BestSubsets$result[which.min(BestSubsets$result$sbc), ]
 
-adding words to try and push
+
+```
+```{r}
+ahshdggh
 ```
 
 
