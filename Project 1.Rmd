@@ -68,5 +68,90 @@ PolyModelReach <- lm(total_interactions ~ reach + I(reach^2) + I(reach^3), data 
 summary(PolyModelReach)
 ```
 
+```{r}
+# MLR Test MSE
+TrueTestValues  <- TestData$total_interactions
+TestPredictions <- predict(MLRModel, newdata = TestData)
+test_mse_MLR   <- mean(na.omit(TrueTestValues - TestPredictions)^2)
+
+# Polynomial Test MSE
+TrueTestValues  <- TestData$total_interactions
+TestPredictions <- predict(PolyModelReach, newdata = TestData)
+test_mse_Poly  <- mean(na.omit(TrueTestValues - TestPredictions)^2)
+
+test_mse_MLR
+test_mse_Polyq
+
+
+###h 
+
+BestModel <- lm(
+  total_interactions ~ type + page_likes + post_month + reach + engaged_users + consumers, 
+  data = FacebookMetrics
+)
+
+
+coef(BestModel)
+
+
+summary(BestModel)
+
+###i 
+NewData <- data.frame(
+  type = c("Photo", "Video"),
+  page_likes = c(120000, 135000),
+  post_month = c(5, 11),
+  reach = c(8000, 15000),
+  engaged_users = c(600, 1200),
+  consumers = c(400, 900)
+)
+
+# 3. Predict the response for both new observations
+Predictions <- predict(BestModel, newdata = NewData)
+Predictions
+
+```
+
+```{r}
+## Data Description 
+
+# Summary statistics command
+summary(FacebookMetrics$total_interactions)
+
+
+# Scatter plot with smooth LOWESS trend line
+plot(
+  FacebookMetrics$reach, 
+  FacebookMetrics$total_interactions,
+  xlab = "Lifetime Post Total Reach",
+  ylab = "Total Interactions",
+  main = "Total Interactions vs. Lifetime Post Total Reach",
+  pch = 19, 
+  col = "dodgerblue"
+)
+
+# Add smoothed trend line
+lines(
+  lowess(FacebookMetrics$reach, FacebookMetrics$total_interactions), 
+  col = "firebrick", 
+  lwd = 2
+)
+
+
+# Load required library (from lecture slide 5)
+library(olsrr)
+
+MyModel <- lm(
+  total_interactions ~ page_likes + type + category + post_month + post_weekday + post_hour + paid,
+  data = FacebookMetrics
+)
+
+BestSubsets <- ols_step_all_possible(MyModel)
+
+BestSubsets
+
+BestSubsets$result[which.min(BestSubsets$result$sbc), ]
+
+```
 
 
